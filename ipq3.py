@@ -48,10 +48,7 @@ supports:
 -print size(UNIMPLEMENTED)  O(1)
 
 to do:
-1) create print function that traverses down the tree to properly calculate
-    correct spacing between each leaf
-2) learn how to create a module, and how to import a class from a module/
-    external file
+1) modularize file
 3) see programming tips on reducing code (you can use it to specify min/max
     heap with minimum extra lines)
 4) add operation -- select item (i.e. find item by hash key)
@@ -98,16 +95,14 @@ class MinIPQ:
         elif type(default) == list:
             self._heapify(default)
 
-    def insert(self, item, key=None):
+    def insert(self, item, priority_key=None):
         """ Inserts/pushes item, with priority, into heap. If no priority
             is given, the method tries to set the priority equal to the
             item (the item must then be numeric, otherwise raises error).
 
-            No
-
         Args:
             item: item to be into heap.
-            key: item's priority key
+            priority_key: item's priority key
 
         Example:
             my_data = MinIPQ()                  # create empty heap instance
@@ -120,16 +115,18 @@ class MinIPQ:
             ValueError: if item already exists in dict
         """
 
-        if key is None:
-            key = item
-        if not (type(key) is int or type(key) is float):
+        if priority_key is None:
+            priority_key = item
+        if not (type(priority_key) is int or type(priority_key) is float):
             raise TypeError("Priority key must be a numeric value.")
         elif item in self.position:
             raise KeyError("Item already exists in heap.")
 
-        self.position[item] = self.N  # set position to heap index (length-1) before incrementing length
+        # we have to set `position` before incrementing `N` since
+        # "position = N" represents the last index whilst `N` represents length
+        self.position[item] = self.N
         self.N += 1
-        self.heap.append([item, key])
+        self.heap.append([item, priority_key])
         self._bubble_up(self.N - 1, item)  # "N-1" because of 0-indexing
 
     def delete(self, item):
@@ -186,7 +183,7 @@ class MinIPQ:
         """ Returns root (top priority) without popping it from the heap."""
         return self.heap[0]
 
-    def change_priority(self, item, key):
+    def change_priority(self, item, priority_key):
         """ Updates the priority value of given item to new priority.
 
         In order to avoid confusion between the term "key" in a priority queue
@@ -198,11 +195,11 @@ class MinIPQ:
 
         Args:
             item: the dictionary key
-            key: the new priority key to be set
+            priority_key: the new priority key to be set
         """
 
         index = self.position[item]
-        self.heap[index][-1] = key
+        self.heap[index][-1] = priority_key
 
         self._bubble_up(self.position[item], item)
         self._bubble_down(self.position[item], item)
