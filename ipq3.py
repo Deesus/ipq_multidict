@@ -5,14 +5,36 @@ updated: 10/23/2015
 
 Indexed priority queue (binary heap). Uses hash function for fast random look-ups.
 
-DOES NOT SUPPORT multiple items with same priority value -- this is
-because you are using hash[key] = array location.
-Perhaps you can fix this?
-Options:
-0) use multi-dict
-1) do nothing. create a check to see if key already exists
-2) check if priority key already exists, if yes, then increment key by
-.1 (this would effectively allow holding 10 items with same key)
+Limitations:
+    - Items inserted into heap must not be mutable objects (e.g. arrays,
+    dicts, etc.)
+
+You can support multiple keys with this data structure:
+    {item: [index_in_heap [, index_in_heap_if_copies] }, priority_value
+
+    -If you have collisions -- i.e. non-unique items the function will go
+    through list of indices where the item resides in heap, move to that index,
+    then pop that item from the hash-value (the list of heap indicies given
+    object) as well as the heap
+
+    -For example, suppose our heap looks like this:
+    >>> my_heap = [['shiva', 35], ['lakshmi', 164], ['dee', 684], ['vlad', 285], ['dee', 275], ['dee', 824], ['shiva', 1132]]
+
+    Internally, we have a hash of every item plus their position in the heap
+    (the heap is a 2D array). The internal hash of index positions would be:
+    {'vlad': [3], 'shiva': [0, 6], 'lakshmi': [1], 'dee': [5, 2, 4]}
+
+    If we wanted to delete key, say, 'dee' from our heap, we would do this:
+    >>> my_heap.delete('dee')
+
+    The delete() method will lookup the key 'dee' in the internal hash; it
+    will find the key and see that its associated value -- an array -- it will
+    pop the last element in this array. If, after popping, the array is empty,
+    the hash key will be deleted as well. The popped value is the position
+    (index) in the heap -- which is also happens to be an array. Using this
+    index, the function will pop the object -- ['dee', 275] -- from the heap
+    array, then go on to maintain the heap invariance as expected.
+
 
 supports:
 -select key 				O(1)
@@ -56,8 +78,8 @@ import random
 
 
 class MinIPQ:
-    """Maps dict keys (keys) to priority keys (values), implemented as
-    a list. Maintains an internal, heap data structure.
+    """ Maps dict keys (keys) to priority keys (values), implemented as
+        a list. Maintains an internal, heap data structure.
     """
 
     def __init__(self, default=None):
@@ -65,28 +87,32 @@ class MinIPQ:
         N: length of heap.
         heap: is array whose elements contain list of items and
         priority keys respectively.
-        position is a hash whose keys are item and values are index
-        positions in heap array.
-
-        Examples:
-        heap[4] >>> ("Chanakya", 12)
-        position["Chanakya"] >>> 4
+        position is a hash whose keys are the inserted items and values are
+        index positions in heap array.
         """
-        if default is None:
-            default = []
 
-        self.heap = default
         self.position = {}
-        self.N = 0
+        if default is None:
+            self.N = 0
+            self.heap = []
+        elif type(default) == list:
+            self._heapify(default)
 
     def insert(self, item, key=None):
-        """Inserts/pushes item, with priority, into heap. If no priority
+        """ Inserts/pushes item, with priority, into heap. If no priority
             is given, the method tries to set the priority equal to the
             item (the item must then be numeric, otherwise raises error).
 
+            No
+
         Args:
-            item: item to be stored as a dict key.
+            item: item to be into heap.
             key: item's priority key
+
+        Example:
+            my_data = MinIPQ()                  # create empty heap instance
+            my_data.insert('Deesus', 7)         # inserts string 'Deesus' with a priority of 7
+            my_data.insert('Tamerlane', 121)    # inserts string 'Tamerlane' with a priority of 121
 
         Raises:
             TypeError: missing required argument.
@@ -107,7 +133,7 @@ class MinIPQ:
         self._bubble_up(self.N - 1, item)  # "N-1" because of 0-indexing
 
     def delete(self, item):
-        """Deletes item from the heap.
+        """ Deletes item from the heap.
 
         Given a particular dict key, the function removes the item
         (key-value pair) from the heap while maintaining the heap invariant.
@@ -140,7 +166,7 @@ class MinIPQ:
         self._bubble_down(index, element[0])
 
     def extract_min(self):
-        """Pops and returns the root (top priority) from heap.
+        """ Pops and returns the root (top priority) from heap.
 
         Returns:
             A a list of item (key) and its associated priority (value).
@@ -157,11 +183,11 @@ class MinIPQ:
         return element
 
     def peek(self):
-        """Returns root (top priority) without popping it from the heap."""
+        """ Returns root (top priority) without popping it from the heap."""
         return self.heap[0]
 
     def change_priority(self, item, key):
-        """Updates the priority value of given item to new priority.
+        """ Updates the priority value of given item to new priority.
 
         In order to avoid confusion between the term "key" in a priority queue
         and the term "key" in a hash/dict, we will refer to "priority" as the
@@ -184,17 +210,6 @@ class MinIPQ:
         # need to convert elements into tuples to be consistent with other
         # functions; we could make a separate class for simple heap (rather
         # than indexed heaps)
-
-    # make sure you name 'heapify' appropriately: min/max, build/create heap?
-    # if it is part of MinIPQ -- then it should be min.
-    def heapify(self, aArray):
-        """Returns a new heap from a given list in O(n) time."""
-        self.heap = aArray
-        self.N = len(self.heap)
-
-        for i in range((self.N - 2) // 2, -1, -1):  # in 0-based index, last-most parent must be (length-2)//2
-            self._heapify_loop(i)
-        return self.heap
 
     #################################
     #       Helper Functions 		#
@@ -244,6 +259,17 @@ class MinIPQ:
         self.heap[j], self.heap[i] = self.heap[i], self.heap[j]
         return j
 
+    # make sure you name 'heapify' appropriately: min/max, build/create heap?
+    # if it is part of MinIPQ -- then it should be min.
+    def _heapify(self, aArray):
+        """Returns a new heap from a given list in O(n) time."""
+        self.heap = aArray
+        self.N = len(self.heap)
+
+        for i in range((self.N - 2) // 2, -1, -1):  # in 0-based index, last-most parent must be (length-2)//2
+            self._heapify_loop(i)
+        return self.heap
+
     def _heapify_loop(self, i):
         """ Starting from the penultimate level (height) of tree, we check if 
             parent node is the smallest; if not, recurse (swap downward) until 
@@ -263,50 +289,45 @@ class MinIPQ:
             self.heap[i], self.heap[min_] = self.heap[min_], self.heap[i]
             self._heapify_loop(min_)
 
-#################################
-#      Print Heap Function 		#
-#################################
+    def print_heap(self):
+        """ A visualization tool to print given heap in a pyramid shape.
 
+            A simple printout function that represents the object in the more
+            visually appropriate 'heap-like' shape -- i.e. a pyramid. For example:
 
-def print_heap(array):
-    """ A visualization tool to print given heap in a pyramid shape.
+                     470
+              1475          143
+            94   1829   1306   12   738
 
-        A simple printout function that represents the object in the more
-        visually appropriate 'heap-like' shape -- i.e. a pyramid. For example:
+            In order to calculate the correct padding/spacing for each item, the
+            function iterates through the entire data structure, computing the
+            total number of characters of the item (both the priority as well as
+            the value associated with it). After the first pass, the priority-item
+            pair with the most characters is determined. This max value is used
+            to determine the spacing/padding evenly for each value-pair at each
+            level of the heap. Aside: since `print_heap` requires two passes, the
+            time complexity is technically O(2n).
+        """
+        # why don't we just use padding format for strings? We can use padding
+        # after and padding before
 
-                 470
-          1475          143
-        94   1829   1306   12   738
+        if not self.heap:
+            return
+        height = int(math.log(len(self.heap), 2)) + 1
 
-        In order to calculate the correct padding/spacing for each item, the
-        function iterates through the entire data structure, computing the
-        total number of characters of the item (both the priority as well as 
-        the value associated with it). After the first pass, the priority-item
-        pair with the most characters is determined. This max value is used
-        to determine the spacing/padding evenly for each value-pair at each
-        level of the heap. Aside: since `print_heap` requires two passes, the
-        time complexity is technically O(2n).
-    """
-    # why don't we just use padding format for strings? We can use padding 
-    # after and padding before
+        iii = 0
+        reps = 1
+        for line in range(1, height + 1):
+            print("  " * (height - line), end='')  # padding
 
-    if not array:
-        return
-    height = int(math.log(len(array), 2)) + 1
-
-    iii = 0
-    reps = 1
-    for line in range(1, height + 1):
-        print("  " * (height - line), end='')  # padding
-
-        try:
-            for _ in range(reps):
-                print(array[iii], end=' ')
-                iii += 1
-        except IndexError:
-            pass
-        print()
-        reps *= 2
+            try:
+                for _ in range(reps):
+                    print(self.heap[iii], end=' ')
+                    iii += 1
+            except IndexError:
+                pass
+            print()
+            reps *= 2
 
 #####################################
 #            test client            #
@@ -316,18 +337,35 @@ def print_heap(array):
 # "my_heap = MinIPQ([23,2563,7254,234]) >>> new heap"
 
 if __name__ == '__main__':
-    testArray = []
+    pass
+    # # test heapified array:
+    # testArray = []
+    # for _ in range(20):
+    #     randNumber = random.randrange(1, 2000)
+    #     testArray.append(randNumber)
+    #
+    # arr_to_heap = MinIPQ(testArray)
+    # print(arr_to_heap.heap, '\n')
+    # arr_to_heap.print_heap()
+    # print('-'*60, '\n')
+    #
+    # # test serialized heap:
+    serialized_heap = MinIPQ()
+    array = []
     for _ in range(20):
-        randNumber = random.randrange(1, 2000)
-        testArray.append(randNumber)
+        input = 'x' + str(_) + str(random.randrange(200))
+        array.append(input)
+        serialized_heap.insert(input, random.randrange(1, 2000))
 
-    my_heap = MinIPQ(testArray)
-    my_heap2 = MinIPQ(testArray)
+    print(array, '\n')
+    serialized_heap.print_heap()
 
-    print_heap(my_heap.heap)
-    print()
-    print(testArray)
+    #####################
+    # test must accept (must heapify) key-val pairs and dicts
 
-    print_heap(my_heap.heap)
-    print()
-    print(testArray)
+    # datastructure must be stored in a hash, not array
+    # pdict is implemented as follows: {item: priority, item2: priority}
+
+    # if we use dict, then we can't have arrays/hashes/collections as item since hash doesn't allow mutable types as hash key
+
+    #data = [[2, []]]
