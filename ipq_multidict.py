@@ -3,11 +3,19 @@ Author: Dee Reddy
 created: 3/19/2015
 updated: 10/23/2015
 
+TODO:
+    -rename index location in `position` as "occurrence stack"
+
 Indexed priority queue (binary heap). Uses hash function for fast random look-ups.
 
 Limitations:
     - Items inserted into heap must not be mutable objects (e.g. arrays,
     dicts, etc.)
+
+    In order to avoid confusion between the term "key" in a priority queue
+    (i.e. 'priority key') and the term "key" in a hash/dict, we will refer to
+    "priority value" as the value that determines the placement of said
+    item/object in the heap.
 
 You can support multiple keys with this data structure:
     {item: [index_in_heap [, index_in_heap_if_copies] }, priority_value
@@ -60,7 +68,7 @@ to do:
     IPQ yet.
     7.5) make heapify use iterative loop rather than recursion
 8) reword key, item, and element so that they're not confusing; i.e. the hash
-    key is different from priority key. Perhaps just use the term 'priority'
+    key is different from priority value. Perhaps just use the term 'priority'
     when refering to it.
 9) perhaps tidy up the bubble up/down by explicitly using variable
 10) use polymorphism so that we can use brackets (like in hashes) for our
@@ -75,7 +83,7 @@ import random
 
 
 class MinIPQ:
-    """ Maps dict keys (keys) to priority keys (values), implemented as
+    """ Maps dict keys (keys) to priority values (values), implemented as
         a list. Maintains an internal, heap data structure.
     """
 
@@ -83,7 +91,7 @@ class MinIPQ:
         """
         N: length of heap.
         heap: is array whose elements contain list of items and
-        priority keys respectively.
+        priority values respectively.
         position is a hash whose keys are the inserted items and values are
         index positions in heap array.
         """
@@ -95,14 +103,14 @@ class MinIPQ:
         elif type(default) == list:
             self._heapify(default)
 
-    def insert(self, item, priority_key=None):
+    def insert(self, item, priority_value=None):
         """ Inserts/pushes item, with priority, into heap. If no priority
             is given, the method tries to set the priority equal to the
             item (the item must then be numeric, otherwise raises error).
 
         Args:
             item: item to be into heap.
-            priority_key: item's priority key
+            priority_value: item's priority value
 
         Example:
             my_data = MinIPQ()                  # create empty heap instance
@@ -111,54 +119,61 @@ class MinIPQ:
 
         Raises:
             TypeError: missing required argument.
-            TypeError: priority key not be a numeric value.
+            TypeError: priority value not be a numeric value.
             ValueError: if item already exists in dict
         """
 
-        if priority_key is None:
-            priority_key = item
-        if not (type(priority_key) is int or type(priority_key) is float):
-            raise TypeError("Priority key must be a numeric value.")
-        elif item in self.position:
-            raise KeyError("Item already exists in heap.")
+        # these 2 conditionals ensure that priority values are numbers:
+        if priority_value is None:
+            priority_value = item
+        if not (type(priority_value) is int or type(priority_value) is float):
+            raise TypeError("Priority value must be a numeric value.")
+
+        # add item's index location; if already in heap, we append the index:
+        if item in self.position:
+            self.position[item].append(self.N)
+        else:
+            self.position[item] = [self.N]
 
         # we have to set `position` before incrementing `N` since
         # "position = N" represents the last index whilst `N` represents length
-        self.position[item] = self.N
         self.N += 1
-        self.heap.append([item, priority_key])
-        self._bubble_up(self.N - 1, item)  # "N-1" because of 0-indexing
+        self.heap.append([item, priority_value])
+        self._bubble_up(self.N - 1, item)       # "N-1" because of 0-indexing
 
     def delete(self, item):
         """ Deletes item from the heap.
 
         Given a particular dict key, the function removes the item
-        (key-value pair) from the heap while maintaining the heap invariant.
+        (key-priority_value pair) from the heap while maintaining the heap invariant.
 
         Args:
             item: the dict key to be deleted (not to be confused with the
-            heap's internal priority key). For example, given a heap of student
+            heap's internal priority value). For example, given a heap of student
             names, we can delete a specific entry with the following:
 
             ipq_instance.delete("Yuji")
 
         Raises:
-            KeyError: if item-key does not exist in the heap.
+            KeyError: if key/item does not exist in the heap.
         """
 
         if item not in self.position:
             raise KeyError("Item does not exist in the heap.")
 
-        self.N -= 1
-        index = self.position[item]
-        del self.position[item]
-        element = self.heap.pop()
+        # acquire index location be removing top (last-most) of position stack;
+        # if resulting stack is empty, we can safely delete it from hash:
+        index = self.position[item].pop()
+        if len(self.position[item]) == 0:
+            del self.position[item]
 
-        # if we pop the item we wanted to delete (last-most item), we can end
+        element = self.heap.pop()
+        self.N -= 1
+        # if we pop the item we wanted to delete (last-most item), we can end:
         if index == self.N:
             return
 
-        # replace with item at end of heap & bubble down:
+        # replace deleted item with the last-most item in heap, & bubble down:
         self.heap[index] = element
         self._bubble_down(index, element[0])
 
@@ -166,7 +181,7 @@ class MinIPQ:
         """ Pops and returns the root (top priority) from heap.
 
         Returns:
-            A a list of item (key) and its associated priority (value).
+            A list of item (key) and its associated priority (value).
             For example: ['Oranges', 17]
         Raises:
             ValueError: if heap is empty.
@@ -179,27 +194,19 @@ class MinIPQ:
         self.delete(element[0])
         return element
 
-    def peek(self):
-        """ Returns root (top priority) without popping it from the heap."""
-        return self.heap[0]
-
-    def change_priority(self, item, priority_key):
+    def change_priority(self, item, priority_value):
         """ Updates the priority value of given item to new priority.
-
-        In order to avoid confusion between the term "key" in a priority queue
-        and the term "key" in a hash/dict, we will refer to "priority" as the
-        value that determines the placement of said value/item in the heap.
 
         Changes the priority of a given dict key to a new value
         while maintaining heap invariant.
 
         Args:
             item: the dictionary key
-            priority_key: the new priority key to be set
+            priority_value: the new priority value to be set
         """
 
         index = self.position[item]
-        self.heap[index][-1] = priority_key
+        self.heap[index][-1] = priority_value
 
         self._bubble_up(self.position[item], item)
         self._bubble_down(self.position[item], item)
@@ -207,6 +214,10 @@ class MinIPQ:
         # need to convert elements into tuples to be consistent with other
         # functions; we could make a separate class for simple heap (rather
         # than indexed heaps)
+
+    def peek(self):
+        """ Returns root (top priority) without popping it from the heap."""
+        return self.heap[0]
 
     #################################
     #       Helper Functions 		#
@@ -221,7 +232,7 @@ class MinIPQ:
         while (i > 0) and self.heap[(i - 1) // 2][-1] > self.heap[i][-1]:  # might be more clean if we defined variable key = heap[i][-1]
             p = (i - 1) // 2  # formula for finding parent index (0-based index)
             i = self._swap(i, p)  # swap values and indices
-        self.position[item] = i
+        self.position[item][-1] = i
 
     def _bubble_down(self, i, item):
         """
@@ -230,7 +241,8 @@ class MinIPQ:
                 c: child index.
         """
 
-        while 2 * i + 1 < self.N:  # equality ensures that there is at least the left index
+        # this conditional ensures that there is at least the left index:
+        while 2 * i + 1 < self.N:
             c = 2 * i + 1  # formula for left child (0-based indexing)
 
             # (c+1 < N) ensures a right child; select the smallest to bubble down:
@@ -241,26 +253,29 @@ class MinIPQ:
                 break
 
             i = self._swap(i, c)  # swap values and indices
-        self.position[item] = i
+        self.position[item][-1] = i     # recall `self.position[item][-1]` = index location (last in stack)
 
     def _swap(self, i, j):
         """ Swaps heap items for both bubbling up/down; returns swapped index (j).
             Also updates child/parent hash to point to updated array position.
             
             Args:
-                i = index of item to bubble
-                j = index of parent/child
+                i: index of item to bubble
+                j: index of parent/child
         """
 
-        self.position[self.heap[j][0]] = i
+        self.position[self.heap[j][0]][-1] = i
         self.heap[j], self.heap[i] = self.heap[i], self.heap[j]
         return j
 
-    # make sure you name 'heapify' appropriately: min/max, build/create heap?
-    # if it is part of MinIPQ -- then it should be min.
-    def _heapify(self, aArray):
-        """Returns a new heap from a given list in O(n) time."""
-        self.heap = aArray
+    def _heapify(self, arr):
+        """ Returns a new heap from a given list in O(n) time.
+
+            Args:
+                arr: array -- can be array of numbers or a 2D array of
+                     key-priority pairs -- e.g. [['dee', 234], ['yang', 8]]
+        """
+        self.heap = arr
         self.N = len(self.heap)
 
         for i in range((self.N - 2) // 2, -1, -1):  # in 0-based index, last-most parent must be (length-2)//2
@@ -296,14 +311,14 @@ class MinIPQ:
               1475          143
             94   1829   1306   12   738
 
-            In order to calculate the correct padding/spacing for each item, the
-            function iterates through the entire data structure, computing the
-            total number of characters of the item (both the priority as well as
-            the value associated with it). After the first pass, the priority-item
-            pair with the most characters is determined. This max value is used
-            to determine the spacing/padding evenly for each value-pair at each
-            level of the heap. Aside: since `print_heap` requires two passes, the
-            time complexity is technically O(2n).
+            In order to calculate the correct padding/spacing for each item,
+            the function iterates through the entire data structure, computing
+            the total number of characters of the item (both the priority as
+            well as the value associated with it). After the first pass, the
+            priority-item pair with the most characters is determined. This max
+            value is used to determine the spacing/padding evenly for each
+            value-pair at each level of the heap. Aside: since `print_heap`
+            requires two passes, the time complexity is technically O(2n).
         """
         # why don't we just use padding format for strings? We can use padding
         # after and padding before
@@ -315,7 +330,8 @@ class MinIPQ:
         iii = 0
         reps = 1
         for line in range(1, height + 1):
-            print("  " * (height - line), end='')  # padding
+            # padding:
+            print("  " * (height - line), end='')
 
             try:
                 for _ in range(reps):
@@ -330,39 +346,14 @@ class MinIPQ:
 #            test client            #
 #####################################
 
-# parametrize the class -- so that we can do this:
-# "my_heap = MinIPQ([23,2563,7254,234]) >>> new heap"
-
 if __name__ == '__main__':
-    pass
-    # # test heapified array:
-    # testArray = []
-    # for _ in range(20):
-    #     randNumber = random.randrange(1, 2000)
-    #     testArray.append(randNumber)
-    #
-    # arr_to_heap = MinIPQ(testArray)
-    # print(arr_to_heap.heap, '\n')
-    # arr_to_heap.print_heap()
-    # print('-'*60, '\n')
-    #
-    # # test serialized heap:
-    serialized_heap = MinIPQ()
     array = []
     for _ in range(20):
-        input = 'x' + str(_) + str(random.randrange(200))
-        array.append(input)
-        serialized_heap.insert(input, random.randrange(1, 2000))
+        input_ = random.randrange(0, 20)
+        array.append(input_)
 
+    heapified = MinIPQ(array)
+
+    # printout:
     print(array, '\n')
-    serialized_heap.print_heap()
-
-    #####################
-    # test must accept (must heapify) key-val pairs and dicts
-
-    # datastructure must be stored in a hash, not array
-    # pdict is implemented as follows: {item: priority, item2: priority}
-
-    # if we use dict, then we can't have arrays/hashes/collections as item since hash doesn't allow mutable types as hash key
-
-    #data = [[2, []]]
+    heapified.print_heap()
