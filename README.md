@@ -1,16 +1,16 @@
 ## ipq_multidict
 ----------------------------
 
-#### Indexed priority queue (binary heap). Uses hash function for fast, random look-ups.
+###### [Indexed priority queue (binary heap)](http://algs4.cs.princeton.edu/24pq/). Uses hash function for fast, random look-ups.
 
 #### Supports:
--select key 				O(1)
--insert key 				O(log n)
--delete key 				O(log n)
--extract min 				O(log n)
--change priority    		O(log n)
--peek (select top element)  O(1)
--heapify (transform list)   O(n)
+- select key                O(1)
+- insert key                O(log n)
+- delete key                O(log n)
+- extract min               O(log n)
+- change priority           O(log n)
+- peek (select top element) O(1)
+- heapify (transform list)  O(n)
 
 #### Usage:
 1) Create a new (empty) heap instance:
@@ -46,10 +46,11 @@ some_data_set = MinIPQ(some_list)
 ```
 
 #### Limitations:
--Items inserted into heap must not be mutable objects (e.g. arrays,
+- Items inserted into heap must not be mutable objects (e.g. arrays,
 dicts, etc.).
--Changing priorities is unsupported if multiple non-unique keys exist in heap.
+- Changing priorities is unsupported if multiple non-unique keys exist in heap.
 
+#### Additional Info:
 In order to avoid confusion between the term "key" in a priority queue (i.e.
 'priority key') and the term "key" in a hash/dict, we will refer to "priority
 value" as the value that determines the placement of said item/object in the
@@ -87,15 +88,24 @@ the heap invariance as expected.
 #### TODO:
 1)  To avoid confusion, rename `position` to something else (e.g.
     "occurrence stack")
+
 2)  Support for kwargs
+
 3)  Make argument input more strict -- i.e. don't support numbers, input args
     must be collections (dicts, arrays)
+    
 4   Perhaps make all getters return a hash instead of array?
+
 5)  Add MaxIPQ() class.
+
 6)  Implement heapify as a loop rather than recursion.
+
 7)  Implement polymorphism for hash-like syntax.
+
 8)  Add more heap operations: update/replace, merge.
+
 9)  Implement magic methods.
+
 10) Implement print function as described in docstring.
 
 #### License:
