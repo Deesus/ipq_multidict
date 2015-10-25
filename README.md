@@ -1,16 +1,16 @@
 ## ipq_multidict
 ----------------------------
 
-###### [Indexed priority queue (binary heap)](http://algs4.cs.princeton.edu/24pq/). Uses hash function for fast, random look-ups.
+###### [Indexed priority queue (binary heap)](http://algs4.cs.princeton.edu/24pq/). Uses hash function for fast, random look-ups. Supports non-unique keys.
 
 #### Supports:
-- select key                O(1)
-- insert key                O(log n)
-- delete key                O(log n)
-- extract min               O(log n)
-- change priority           O(log n)
-- peek (select top element) O(1)
-- heapify (transform list)  O(n)
+- select key.................._O(1)_
+- insert key.................._O(log n)_
+- delete key.................._O(log n)_
+- extract min................._O(log n)_
+- change priority............._O(log n)_
+- peek (select top element)..._O(1)_
+- heapify (transform list)...._O(n)_
 
 #### Usage:
 1) Create a new (empty) heap instance:
@@ -109,4 +109,4 @@ the heap invariance as expected.
 10) Implement print function as described in docstring.
 
 #### License:
-Released under Apache License. Copyright (c) 2015 Dee Reddy.
+Released under the Apache License. Copyright (c) 2015 Dee Reddy.

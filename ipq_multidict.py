@@ -81,6 +81,10 @@ TODO:
 8)  Add more heap operations: update/replace, merge.
 9)  Implement magic methods.
 10) Implement print function as described in docstring.
+11) One solution to the 'how to change_priority() for multiple non-unique keys'
+    problem is to look up the key, and use this info to specify the particular
+    key-priority value pair to change.
+to
 """
 __author__ = ('Dee Reddy', 'github.com/Ogodei')
 
