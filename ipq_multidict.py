@@ -346,7 +346,8 @@ class MinIPQ:
             self.heap[i], self.heap[min_] = self.heap[min_], self.heap[i]
             self._heapify_loop(min_)
 
-    def print_heap(self):
+    # TODO: implement the print function as described in docstring
+    def _print_heap(self):
         """ A visualization tool to print given heap in a pyramid shape.
 
             :future implementation:
