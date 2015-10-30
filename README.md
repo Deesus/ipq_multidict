@@ -4,11 +4,11 @@
 ###### [Indexed priority queue (binary heap)](http://algs4.cs.princeton.edu/24pq/). Uses hash function for fast, random look-ups. Supports non-unique keys.
 
 #### Supports:
-- select key..........................._O(1)_
+- select key............................_O(1)_
 - insert key............................_O(log n)_
 - delete key..........................._O(log n)_
-- extract min........................._O(log n)_
-- change priority................._O(log n)_
+- extract min.........................._O(log n)_
+- change priority...................._O(log n)_
 - peek (select top element)..._O(1)_
 - heapify (transform list)........_O(n)_
 
