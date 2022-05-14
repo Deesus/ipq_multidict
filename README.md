@@ -92,4 +92,4 @@ The delete() method will lookup the key 'dee' in the internal hash; it will find
 10) Implement print function as described in docstring.
 
 #### License:
-Released under the Apache License. Copyright (c) 2015 Dee Reddy.
+Released under the Apache License. Copyright (c) 2015 Deepankara Reddy.

@@ -1,5 +1,5 @@
 """
-Author: Dee Reddy
+Author: Deepankara Reddy
 created: 3/19/2015
 updated: 10/23/2015
 
@@ -86,7 +86,7 @@ TODO:
     key-priority value pair to change.
 to
 """
-__author__ = ('Dee Reddy', 'github.com/Ogodei')
+__author__ = ('Deepankara Reddy')
 
 import math
 
